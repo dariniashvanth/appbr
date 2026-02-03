@@ -2,7 +2,7 @@ const express = require("express");
 const router = express.Router();
 const Appointment = require("../models/Appointment");
 
-// Get all appointments
+// ---------- GET ALL APPOINTMENTS ----------
 router.get("/", async (req, res) => {
   try {
     const appointments = await Appointment.find();
@@ -12,12 +12,20 @@ router.get("/", async (req, res) => {
   }
 });
 
-// Add new appointment
+// ---------- ADD NEW APPOINTMENT ----------
 router.post("/", async (req, res) => {
   try {
-    const { patientName, age, gender, healthIssue, doctorName, specialization, date, time } = req.body;
-
-    // Optional: check slot availability here if needed
+    const {
+      patientName,
+      age,
+      gender,
+      healthIssue,
+      doctorName,
+      specialization,
+      date,
+      time,
+      status
+    } = req.body;
 
     const appointment = new Appointment({
       patientName,
@@ -28,6 +36,7 @@ router.post("/", async (req, res) => {
       specialization,
       date,
       time,
+      status: status 
     });
 
     await appointment.save();
@@ -37,21 +46,26 @@ router.post("/", async (req, res) => {
   }
 });
 
-// Update appointment (reschedule)
+// ---------- UPDATE APPOINTMENT ----------
 router.put("/:id", async (req, res) => {
   try {
-    const appointment = await Appointment.findByIdAndUpdate(req.params.id, req.body, { new: true });
+    const updatedData = req.body; // can include status, date, time, etc.
+    const appointment = await Appointment.findByIdAndUpdate(
+      req.params.id,
+      updatedData,
+      { new: true }
+    );
     res.json(appointment);
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
 });
 
-// Cancel appointment
+// ---------- DELETE APPOINTMENT ----------
 router.delete("/:id", async (req, res) => {
   try {
     await Appointment.findByIdAndDelete(req.params.id);
-    res.json({ message: "Appointment cancelled successfully" });
+    res.json({ message: "Appointment deleted successfully" });
   } catch (err) {
     res.status(500).json({ error: err.message });
   }

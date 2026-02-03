@@ -4,29 +4,31 @@ const cors = require("cors");
 
 const app = express();
 
-// Middleware
+// ================= Middleware =================
 app.use(cors());
 app.use(express.json());
 
-// ===== MongoDB Connection =====
-mongoose.connect("mongodb://localhost:27017/doctorApp")
-  .then(() => console.log("MongoDB connected"))
-  .catch(err => console.error("MongoDB connection error:", err));
+// ================= MongoDB Connection =================
+mongoose
+  .connect(
+    "mongodb+srv://darini:darini@cluster0.a5vycrh.mongodb.net/doctorApp?retryWrites=true&w=majority"
+  )
+  .then(() => console.log("✅ MongoDB Atlas connected"))
+  .catch((err) => console.error("❌ MongoDB connection error:", err));
 
-// ===== Schemas =====
+// ================= Schemas =================
+
+// Doctor Schema
 const doctorSchema = new mongoose.Schema({
   name: String,
   specialization: String,
   clinic: String,
   image: String,
-  availability: [
-    {
-      date: String,
-      slots: [String],
-    },
-  ],
+  availableDays: String,   // eg: Mon,Tue,Wed
+  availableTime: String,   // eg: 10:00-13:00
 });
 
+// Appointment Schema
 const appointmentSchema = new mongoose.Schema({
   patientName: String,
   age: Number,
@@ -34,20 +36,25 @@ const appointmentSchema = new mongoose.Schema({
   healthIssue: String,
   doctorName: String,
   specialization: String,
+  clinic: String,          // ✅ IMPORTANT
   date: String,
   time: String,
 });
 
-// ===== Models =====
+// ================= Models =================
 const Doctor = mongoose.model("Doctor", doctorSchema);
 const Appointment = mongoose.model("Appointment", appointmentSchema);
 
-// ===== Routes =====
+// ================= Routes =================
 
 // Test API
-app.get("/", (req, res) => res.send("Doctor Appointment API running"));
+app.get("/", (req, res) => {
+  res.send("Doctor Appointment API running");
+});
 
-// ----- Doctors Routes -----
+// ================= DOCTORS =================
+
+// Get all doctors
 app.get("/doctors", async (req, res) => {
   try {
     const doctors = await Doctor.find();
@@ -57,6 +64,7 @@ app.get("/doctors", async (req, res) => {
   }
 });
 
+// Add doctor
 app.post("/doctors", async (req, res) => {
   try {
     const doctor = new Doctor(req.body);
@@ -67,25 +75,33 @@ app.post("/doctors", async (req, res) => {
   }
 });
 
+// Update doctor
 app.put("/doctors/:id", async (req, res) => {
   try {
-    const doctor = await Doctor.findByIdAndUpdate(req.params.id, req.body, { new: true });
-    res.json(doctor);
+    const updatedDoctor = await Doctor.findByIdAndUpdate(
+      req.params.id,
+      req.body,
+      { new: true }
+    );
+    res.json(updatedDoctor);
   } catch (err) {
     res.status(400).json({ error: err.message });
   }
 });
 
+// Delete doctor
 app.delete("/doctors/:id", async (req, res) => {
   try {
     await Doctor.findByIdAndDelete(req.params.id);
-    res.json({ message: "Doctor deleted" });
+    res.json({ message: "Doctor deleted successfully" });
   } catch (err) {
     res.status(400).json({ error: err.message });
   }
 });
 
-// ----- Appointments Routes -----
+// ================= APPOINTMENTS =================
+
+// Get all appointments
 app.get("/appointments", async (req, res) => {
   try {
     const appointments = await Appointment.find();
@@ -95,6 +111,7 @@ app.get("/appointments", async (req, res) => {
   }
 });
 
+// Add appointment
 app.post("/appointments", async (req, res) => {
   try {
     const appointment = new Appointment(req.body);
@@ -105,16 +122,32 @@ app.post("/appointments", async (req, res) => {
   }
 });
 
-// Optional: Delete appointment
-app.delete("/appointments/:id", async (req, res) => {
+// ✅ UPDATE appointment (EDIT)
+app.put("/appointments/:id", async (req, res) => {
   try {
-    await Appointment.findByIdAndDelete(req.params.id);
-    res.json({ message: "Appointment deleted" });
+    const updated = await Appointment.findByIdAndUpdate(
+      req.params.id,
+      req.body,
+      { new: true }
+    );
+    res.json(updated);
   } catch (err) {
     res.status(400).json({ error: err.message });
   }
 });
 
-// ===== Start Server =====
-const PORT = process.env.PORT || 5000;
-app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
+// Delete appointment
+app.delete("/appointments/:id", async (req, res) => {
+  try {
+    await Appointment.findByIdAndDelete(req.params.id);
+    res.json({ message: "Appointment deleted successfully" });
+  } catch (err) {
+    res.status(400).json({ error: err.message });
+  }
+});
+
+// ================= Start Server =================
+const PORT = process.env.PORT || 10000;
+app.listen(PORT, () =>
+  console.log(`🚀 Server running on port ${PORT}`)
+);

@@ -2,7 +2,7 @@ const express = require("express");
 const router = express.Router();
 const Doctor = require("../models/Doctor");
 
-// Get all doctors
+// GET all doctors
 router.get("/", async (req, res) => {
   try {
     const doctors = await Doctor.find();
@@ -12,33 +12,45 @@ router.get("/", async (req, res) => {
   }
 });
 
-// Add new doctor
+// ADD doctor
 router.post("/", async (req, res) => {
   try {
-    const { name, specialization, availability } = req.body;
-    const doctor = new Doctor({ name, specialization, availability });
+    const { name, specialization, clinic, availableDays, availableTime } = req.body;
+
+    const doctor = new Doctor({
+      name,
+      specialization,
+      clinic,
+      availableDays,
+      availableTime,
+    });
+
     await doctor.save();
-    res.json(doctor);
+    res.status(201).json(doctor);
   } catch (err) {
-    res.status(500).json({ error: err.message });
+    res.status(400).json({ error: err.message });
   }
 });
 
-// Update doctor
+// UPDATE doctor
 router.put("/:id", async (req, res) => {
   try {
-    const doctor = await Doctor.findByIdAndUpdate(req.params.id, req.body, { new: true });
+    const doctor = await Doctor.findByIdAndUpdate(
+      req.params.id,
+      req.body,
+      { new: true }
+    );
     res.json(doctor);
   } catch (err) {
-    res.status(500).json({ error: err.message });
+    res.status(400).json({ error: err.message });
   }
 });
 
-// Delete doctor
+// DELETE doctor
 router.delete("/:id", async (req, res) => {
   try {
     await Doctor.findByIdAndDelete(req.params.id);
-    res.json({ message: "Doctor deleted successfully" });
+    res.json({ message: "Doctor deleted" });
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
